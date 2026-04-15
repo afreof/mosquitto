@@ -1307,6 +1307,38 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>tls_cert_watch</option> [ disabled | polling ]</term>
+				<listitem>
+					<para>Control automatic reloading of TLS certificate and key
+						files when they change on disk. When set to
+						<replaceable>polling</replaceable>, mosquitto will
+						periodically check the modification time of the
+						<option>certfile</option>, <option>keyfile</option>,
+						<option>cafile</option>, and <option>crlfile</option>
+						for each TLS listener. If any file has changed, the
+						TLS context for that listener is reloaded automatically
+						without interrupting existing connections.</para>
+					<para>If the reload fails (e.g. due to a corrupt or
+						incomplete file), the previous TLS context is
+						preserved and a warning is logged. The check will be
+						retried on the next interval.</para>
+					<para>Defaults to <replaceable>disabled</replaceable>.
+						See also <option>tls_cert_watch_interval</option>.</para>
+					<para>Not reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>tls_cert_watch_interval</option> <replaceable>seconds</replaceable></term>
+				<listitem>
+					<para>When <option>tls_cert_watch</option> is set to
+						<replaceable>polling</replaceable>, this controls how
+						often (in seconds) the certificate files are checked
+						for changes. Defaults to
+						<replaceable>60</replaceable>.</para>
+					<para>Not reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>user</option> <replaceable>username</replaceable></term>
 				<listitem>
 					<para>When run as root, change to this user and its primary
