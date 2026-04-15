@@ -217,6 +217,9 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 		session_expiry__check();
 		will_delay__check();
 
+#ifdef WITH_TLS
+		cert_watch__nudge_timeout();
+#endif
 		rc = mux__handle(listensock, listensock_count);
 		if(rc){
 			return rc;
@@ -243,6 +246,9 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 			return rc;
 		}
 
+#ifdef WITH_TLS
+		cert_watch__check();
+#endif
 #if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
 		for(int i=0; i<db.config->listener_count; i++){
 			/* Extremely hacky, should be using the lws provided external poll

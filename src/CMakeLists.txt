@@ -5,6 +5,7 @@ add_executable(mosquitto
 	../lib/alias_mosq.c ../lib/alias_mosq.h
 	bridge.c bridge_topic.c
 	broker_control.c
+	cert_watch.c
 	conf.c
 	conf_includedir.c
 	context.c

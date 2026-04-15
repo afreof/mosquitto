@@ -562,6 +562,9 @@ int main(int argc, char *argv[])
 		return rc;
 	}
 
+#ifdef WITH_TLS
+	cert_watch__init();
+#endif
 
 #ifdef WITH_BRIDGE
 	bridge__start_all();

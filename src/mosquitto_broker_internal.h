@@ -318,6 +318,13 @@ struct mosquitto_plugin_id_t {
 	struct timespec next_tick;
 };
 
+#ifdef WITH_TLS
+enum mosquitto__cert_watch_mode {
+	cert_watch_disabled = 0,
+	cert_watch_polling  = 1,
+};
+#endif
+
 struct mosquitto__config {
 	bool allow_duplicate_messages;
 	int autosave_interval;
@@ -369,6 +376,10 @@ struct mosquitto__config {
 	int sys_interval;
 	bool upgrade_outgoing_qos;
 	char *user;
+#ifdef WITH_TLS
+	enum mosquitto__cert_watch_mode tls_cert_watch;
+	int tls_cert_watch_interval; /* seconds between poll checks, default 60 */
+#endif
 #if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
 	int websockets_log_level;
 #endif
@@ -835,6 +846,15 @@ void listeners__add_websockets(struct lws_context *ws_context, mosq_sock_t fd);
 #endif
 int listeners__start(void);
 void listeners__stop(void);
+
+/* ============================================================
+ * Certificate watch
+ * ============================================================ */
+#ifdef WITH_TLS
+void cert_watch__init(void);
+void cert_watch__check(void);
+void cert_watch__nudge_timeout(void);
+#endif
 
 /* ============================================================
  * Plugin related functions

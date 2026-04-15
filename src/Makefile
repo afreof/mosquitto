@@ -49,6 +49,7 @@ OBJS=	mosquitto.o \
 		bridge.o \
 		bridge_topic.o \
 		broker_control.o \
+		cert_watch.o \
 		conf.o \
 		conf_includedir.o \
 		context.o \

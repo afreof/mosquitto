@@ -110,6 +110,9 @@ int signal__flag_check(void)
 		log__printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
 		config__read(db.config, true);
 		listeners__reload_all_certificates();
+#ifdef WITH_TLS
+		cert_watch__init();
+#endif
 		rc = plugin__handle_reload();
 		if(rc){
 			return rc;
