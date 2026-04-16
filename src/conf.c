@@ -205,6 +205,10 @@ static void config__init_reload(struct mosquitto__config *config)
 	config->set_tcp_nodelay = false;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
+#ifdef WITH_TLS
+	config->tls_cert_watch = cert_watch_disabled;
+	config->tls_cert_watch_interval = 60;
+#endif
 
 	config__cleanup_plugins(config);
 }
@@ -596,6 +600,10 @@ static void config__copy(struct mosquitto__config *src, struct mosquitto__config
 	dest->queue_qos0_messages = src->queue_qos0_messages;
 	dest->sys_interval = src->sys_interval;
 	dest->upgrade_outgoing_qos = src->upgrade_outgoing_qos;
+#ifdef WITH_TLS
+	dest->tls_cert_watch = src->tls_cert_watch;
+	dest->tls_cert_watch_interval = src->tls_cert_watch_interval;
+#endif
 
 #ifdef WITH_WEBSOCKETS
 	dest->websockets_log_level = src->websockets_log_level;
@@ -2047,6 +2055,41 @@ static int config__read_file_core(struct mosquitto__config *config, bool reload,
 #if defined(WITH_TLS)
 					if(reload) continue; /* Listeners not valid for reloading. */
 					if(conf__parse_string(&token, "tls_version", &cur_listener->tls_version, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_cert_watch")){
+#ifdef WITH_TLS
+					char *mode = NULL;
+					if(conf__parse_string(&token, "tls_cert_watch", &mode, saveptr)){
+						return MOSQ_ERR_INVAL;
+					}
+					if(!strcmp(mode, "disabled")){
+						config->tls_cert_watch = cert_watch_disabled;
+					}else if(!strcmp(mode, "polling")){
+						config->tls_cert_watch = cert_watch_polling;
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR,
+						            "Error: Invalid value for tls_cert_watch: '%s'. "
+						            "Use 'disabled' or 'polling'.", mode);
+						mosquitto_free(mode);
+						return MOSQ_ERR_INVAL;
+					}
+					mosquitto_free(mode);
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_cert_watch_interval")){
+#ifdef WITH_TLS
+					if(conf__parse_int(&token, "tls_cert_watch_interval",
+					                   &config->tls_cert_watch_interval, saveptr)){
+						return MOSQ_ERR_INVAL;
+					}
+					if(config->tls_cert_watch_interval < 1){
+						log__printf(NULL, MOSQ_LOG_ERR,
+						            "Error: tls_cert_watch_interval must be >= 1.");
+						return MOSQ_ERR_INVAL;
+					}
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif

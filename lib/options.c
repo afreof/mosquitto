@@ -283,8 +283,10 @@ int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value)
 {
 #ifdef WITH_TLS
-	ENGINE *eng;
-	char *str;
+#  ifndef OPENSSL_NO_ENGINE
+        ENGINE *eng;
+#  endif
+        char *str;
 #endif
 
 	if(!mosq) return MOSQ_ERR_INVAL;

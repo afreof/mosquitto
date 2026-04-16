@@ -586,6 +586,10 @@ int main(int argc, char *argv[])
 	rc = mux__init(listensock, listensock_count);
 	if(rc) return rc;
 
+#ifdef WITH_TLS
+	cert_watch__init();
+#endif
+
 	signal__setup();
 
 #ifdef WITH_BRIDGE

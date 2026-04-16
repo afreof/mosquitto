@@ -202,6 +202,9 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 		bridge_check();
 #endif
 
+#ifdef WITH_TLS
+		cert_watch__nudge_timeout();
+#endif
 		rc = mux__handle(listensock, listensock_count);
 		if(rc) return rc;
 
@@ -233,6 +236,9 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 			log__printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
 			config__read(db.config, true);
 			listeners__reload_all_certificates();
+#ifdef WITH_TLS
+			cert_watch__init();
+#endif
 			mosquitto_security_cleanup(true);
 			mosquitto_security_init(true);
 			mosquitto_security_apply();
@@ -250,6 +256,9 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 			xtreport();
 #endif
 		}
+#ifdef WITH_TLS
+		cert_watch__check();
+#endif
 #ifdef WITH_WEBSOCKETS
 		for(i=0; i<db.config->listener_count; i++){
 			/* Extremely hacky, should be using the lws provided external poll
