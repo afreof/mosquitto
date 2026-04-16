@@ -1096,6 +1096,25 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>tls_cert_watch_settle</option> <replaceable>seconds</replaceable></term>
+				<listitem>
+					<para>Settle period in seconds.  When
+						<option>tls_cert_watch</option> detects a change in
+						any certificate file, the reload is delayed until no
+						further changes are observed for this many seconds.
+						This avoids reloading with a partially-written
+						certificate set when a deployment tool replaces
+						multiple files in sequence (e.g. certbot renewing
+						both <option>certfile</option> and
+						<option>keyfile</option>).  Every new change detected
+						during the settle window resets the timer.  Set to
+						<replaceable>0</replaceable> to reload immediately on
+						the first detected change.  Defaults to
+						<replaceable>2</replaceable>.</para>
+					<para>Not reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>user</option> <replaceable>username</replaceable></term>
 				<listitem>
 					<para>When run as root, change to this user and its primary
