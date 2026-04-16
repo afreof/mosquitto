@@ -53,10 +53,20 @@ struct cert_watch_entry {
 	struct cert_watch_mtime keyfile_mtime;
 	struct cert_watch_mtime cafile_mtime;
 	struct cert_watch_mtime crlfile_mtime;
+	/* Snapshot taken when the settle timer was (last) started.  Used to
+	 * detect further changes *during* the settle window so the timer can
+	 * be reset without comparing against the original (pre-rotation)
+	 * snapshot, which would always appear "changed". */
+	struct cert_watch_mtime settle_certfile_mtime;
+	struct cert_watch_mtime settle_keyfile_mtime;
+	struct cert_watch_mtime settle_cafile_mtime;
+	struct cert_watch_mtime settle_crlfile_mtime;
+	time_t settle_until_s; /* 0 = not settling; >0 = hold reload until this time */
 };
 
 static struct cert_watch_entry *watch_entries = NULL;
 static time_t next_poll_s = 0;
+static time_t next_settle_s = 0; /* earliest per-listener settle deadline */
 
 
 static struct cert_watch_mtime file_mtime(const char *path)
@@ -148,6 +158,19 @@ void cert_watch__nudge_timeout(void)
 	if(remaining_ms < (int64_t)db.next_event_ms){
 		db.next_event_ms = (int)remaining_ms;
 	}
+
+	/* Also wake up when the earliest settle deadline expires. */
+	if(next_settle_s > 0){
+		int64_t settle_ms;
+		if(now >= next_settle_s){
+			settle_ms = 0;
+		} else {
+			settle_ms = (int64_t)(next_settle_s - now) * 1000;
+		}
+		if(settle_ms < (int64_t)db.next_event_ms){
+			db.next_event_ms = (int)settle_ms;
+		}
+	}
 }
 
 
@@ -173,6 +196,9 @@ void cert_watch__check(void)
 		next_poll_s = mosquitto_time() + (time_t)db.config->tls_cert_watch_interval;
 	}
 
+	time_t now = mosquitto_time();
+	next_settle_s = 0;
+
 	for(int i = 0; i < db.config->listener_count; i++){
 		struct mosquitto__listener *listener = &db.config->listeners[i];
 		if(!(listener->ssl_ctx && listener->certfile && listener->keyfile)){
@@ -184,12 +210,72 @@ void cert_watch__check(void)
 		struct cert_watch_mtime ca_m    = file_mtime(listener->cafile);
 		struct cert_watch_mtime crl_m   = file_mtime(listener->crlfile);
 
-		if(mtime_changed(cert_m, watch_entries[i].certfile_mtime)
-				|| mtime_changed(key_m,  watch_entries[i].keyfile_mtime)
-				|| mtime_changed(ca_m,   watch_entries[i].cafile_mtime)
-				|| mtime_changed(crl_m,  watch_entries[i].crlfile_mtime)){
+		bool changed = mtime_changed(cert_m, watch_entries[i].certfile_mtime)
+		             || mtime_changed(key_m,  watch_entries[i].keyfile_mtime)
+		             || mtime_changed(ca_m,   watch_entries[i].cafile_mtime)
+		             || mtime_changed(crl_m,  watch_entries[i].crlfile_mtime);
 
-			/* Debug: report exactly which files changed. */
+		int settle = db.config->tls_cert_watch_settle;
+
+		if(watch_entries[i].settle_until_s > 0){
+			if(now < watch_entries[i].settle_until_s){
+				/* Still within the settle window.  Detect further changes
+				 * by comparing against the settle-start snapshot, not the
+				 * original (pre-rotation) snapshot — which always appears
+				 * "changed" and would perpetually reset the timer. */
+				bool settle_changed =
+				    mtime_changed(cert_m, watch_entries[i].settle_certfile_mtime)
+				    || mtime_changed(key_m,  watch_entries[i].settle_keyfile_mtime)
+				    || mtime_changed(ca_m,   watch_entries[i].settle_cafile_mtime)
+				    || mtime_changed(crl_m,  watch_entries[i].settle_crlfile_mtime);
+				if(settle_changed){
+					/* Files still changing — reset the debounce timer and
+					 * update the settle snapshot. */
+					watch_entries[i].settle_until_s       = now + (time_t)settle;
+					watch_entries[i].settle_certfile_mtime = cert_m;
+					watch_entries[i].settle_keyfile_mtime  = key_m;
+					watch_entries[i].settle_cafile_mtime   = ca_m;
+					watch_entries[i].settle_crlfile_mtime  = crl_m;
+				}
+				/* Track deadline and skip. */
+				if(next_settle_s == 0 || watch_entries[i].settle_until_s < next_settle_s){
+					next_settle_s = watch_entries[i].settle_until_s;
+				}
+				continue;
+			}
+			/* Settle period elapsed — proceed to reload (or skip if reverted). */
+			watch_entries[i].settle_until_s = 0;
+			if(!changed){
+				/* Files returned to original state — nothing to reload. */
+				continue;
+			}
+			log__printf(NULL, MOSQ_LOG_DEBUG,
+			            "Certificate watch: settle period elapsed for listener on "
+			            "port %d, triggering reload.",
+			            listener->port);
+			/* Fall through to reload. */
+		} else if(!changed){
+			continue;
+		} else if(settle > 0){
+			/* First change detected; start settle timer and snapshot current
+			 * mtimes as the settle baseline. */
+			watch_entries[i].settle_until_s        = now + (time_t)settle;
+			watch_entries[i].settle_certfile_mtime = cert_m;
+			watch_entries[i].settle_keyfile_mtime  = key_m;
+			watch_entries[i].settle_cafile_mtime   = ca_m;
+			watch_entries[i].settle_crlfile_mtime  = crl_m;
+			if(next_settle_s == 0 || watch_entries[i].settle_until_s < next_settle_s){
+				next_settle_s = watch_entries[i].settle_until_s;
+			}
+			log__printf(NULL, MOSQ_LOG_NOTICE,
+			            "Certificate watch: change detected for listener on port %d, "
+			            "waiting %ds for files to stabilise before reloading.",
+			            listener->port, settle);
+			continue;
+		}
+		/* settle == 0 (or settle expired): proceed with reload. */
+
+		/* Debug: report exactly which files changed. */
 			if(mtime_changed(cert_m, watch_entries[i].certfile_mtime)){
 				log__printf(NULL, MOSQ_LOG_DEBUG,
 				            "Certificate watch: %s changed (mtime %ld.%09ld -> %ld.%09ld).",
@@ -285,7 +371,6 @@ void cert_watch__check(void)
 					            "SHA-256 fingerprint: %s", fp_hex);
 				}
 			}
-		}
 	}
 }
 

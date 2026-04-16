@@ -353,6 +353,7 @@ static void config__init_reload(struct mosquitto__config *config)
 #ifdef WITH_TLS
 	config->tls_cert_watch = cert_watch_disabled;
 	config->tls_cert_watch_interval = 60;
+	config->tls_cert_watch_settle = 2;
 #endif
 	config->packet_buffer_size = 4096;
 
@@ -743,6 +744,7 @@ static void config__copy(struct mosquitto__config *src, struct mosquitto__config
 #ifdef WITH_TLS
 	dest->tls_cert_watch = src->tls_cert_watch;
 	dest->tls_cert_watch_interval = src->tls_cert_watch_interval;
+	dest->tls_cert_watch_settle = src->tls_cert_watch_settle;
 #endif
 
 #if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
@@ -2748,6 +2750,20 @@ static int config__read_file_core(struct mosquitto__config *config, bool reload,
 					if(config->tls_cert_watch_interval < 1){
 						log__printf(NULL, MOSQ_LOG_ERR,
 						            "Error: tls_cert_watch_interval must be >= 1.");
+						return MOSQ_ERR_INVAL;
+					}
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_cert_watch_settle")){
+#ifdef WITH_TLS
+					if(conf__parse_int(&token, "tls_cert_watch_settle",
+					                   &config->tls_cert_watch_settle, &saveptr)){
+						return MOSQ_ERR_INVAL;
+					}
+					if(config->tls_cert_watch_settle < 0){
+						log__printf(NULL, MOSQ_LOG_ERR,
+						            "Error: tls_cert_watch_settle must be >= 0.");
 						return MOSQ_ERR_INVAL;
 					}
 #else
