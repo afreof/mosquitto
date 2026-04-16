@@ -28,7 +28,9 @@ Contributors:
 #ifdef WITH_TLS
 
 #include <openssl/ssl.h>
-#include <openssl/engine.h>
+#ifndef OPENSSL_NO_ENGINE
+#  include <openssl/engine.h>
+#endif
 
 int mosquitto__server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx);
 int mosquitto__verify_certificate_hostname(X509 *cert, const char *hostname);

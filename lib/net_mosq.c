@@ -55,7 +55,9 @@ Contributors:
 
 #ifdef WITH_TLS
 #include <openssl/conf.h>
-#include <openssl/engine.h>
+#ifndef OPENSSL_NO_ENGINE
+#  include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/ui.h>
 #include <tls_mosq.h>
@@ -642,7 +644,9 @@ static int net__tls_load_ca(struct mosquitto *mosq)
 static int net__init_ssl_ctx(struct mosquitto *mosq)
 {
 	int ret;
+#if !defined(OPENSSL_NO_ENGINE)
 	ENGINE *engine = NULL;
+#endif
 	uint8_t tls_alpn_wire[256];
 	uint8_t tls_alpn_len;
 #if !defined(OPENSSL_NO_ENGINE)
