@@ -306,6 +306,7 @@ struct mosquitto__config {
 #ifdef WITH_TLS
 	enum mosquitto__cert_watch_mode tls_cert_watch;
 	int tls_cert_watch_interval; /* seconds between poll checks, default 60 */
+	int tls_cert_watch_settle;   /* seconds to wait for files to stabilise before reloading, default 2 */
 #endif
 #ifdef WITH_WEBSOCKETS
 	int websockets_log_level;
