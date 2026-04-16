@@ -84,6 +84,26 @@ def start_client(filename, cmd, env, port=1888):
     return subprocess.Popen(cmd, env=env)
 
 
+def wait_for_subprocess(client, timeout=10, terminate_timeout=2):
+    rc = 0
+    try:
+        client.wait(timeout)
+    except subprocess.TimeoutExpired:
+        rc = 1
+        client.terminate()
+        try:
+            client.wait(terminate_timeout)
+        except subprocess.TimeoutExpired:
+            rc = 2
+            client.kill()
+            try:
+                client.wait(terminate_timeout)
+            except subprocess.TimeoutExpired:
+                rc = 3
+                pass
+    return rc
+
+
 def expect_packet(sock, name, expected):
     if len(expected) > 0:
         rlen = len(expected)
