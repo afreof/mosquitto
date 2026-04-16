@@ -56,6 +56,7 @@ def write_config(filename, cert_dir, port1, port2):
         f.write(f"crlfile {cert_dir}/crl.pem\n")
         f.write("tls_cert_watch polling\n")
         f.write(f"tls_cert_watch_interval {POLL_INTERVAL}\n")
+        f.write("tls_cert_watch_settle 0\n")
 
 
 def make_client_context():
