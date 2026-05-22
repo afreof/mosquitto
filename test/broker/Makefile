@@ -180,6 +180,11 @@ ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-no-auth.py
 	./08-ssl-connect-no-identity.py
 	./08-ssl-hup-disconnect.py
+	./08-ssl-cert-watch-polling.py
+	./08-ssl-cert-watch-failure-retry.py
+	./08-ssl-cert-watch-crl-rotation.py
+	./08-ssl-cert-watch-settle.py
+	./08-ssl-cert-watch-settle-reset.py
 ifeq ($(WITH_TLS_PSK),yes)
 	./08-tls-psk-pub.py
 	./08-tls-psk-bridge.py

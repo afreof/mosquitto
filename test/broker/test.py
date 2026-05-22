@@ -155,6 +155,11 @@ tests = [
     (2, './08-ssl-connect-no-auth.py'),
     (2, './08-ssl-connect-no-identity.py'),
     (1, './08-ssl-hup-disconnect.py'),
+    (1, './08-ssl-cert-watch-polling.py'),
+    (1, './08-ssl-cert-watch-failure-retry.py'),
+    (1, './08-ssl-cert-watch-crl-rotation.py'),
+    (1, './08-ssl-cert-watch-settle.py'),
+    (1, './08-ssl-cert-watch-settle-reset.py'),
     (2, './08-tls-psk-pub.py'),
     (3, './08-tls-psk-bridge.py'),
 
