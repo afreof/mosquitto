@@ -29,6 +29,7 @@ class ListenerConfig:
     require_certificate: Optional[bool] = None
     tls_cert_watch: Optional[str] = None
     tls_cert_watch_interval: Optional[int] = None
+    tls_cert_watch_settle: Optional[int] = None
     use_identity_as_username: Optional[bool] = None
     websockets_origin: Optional[str] = None
 

@@ -90,6 +90,7 @@ try:
                 crlfile=Path(cert_dir) / "crl.pem",
                 tls_cert_watch="polling",
                 tls_cert_watch_interval=POLL_INTERVAL,
+                tls_cert_watch_settle=0,
             ),
         ],
         allow_anonymous=True,
