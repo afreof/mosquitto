@@ -6,6 +6,7 @@ import re
 import shutil
 import socket
 import ssl
+import time
 from pathlib import Path
 
 import mosq_test
@@ -62,12 +63,17 @@ def tls_client_context(cafile="test-root-ca.crt", cert="client"):
     return context
 
 
-def tls_connect(port, client_id, cert="client", keepalive=60):
+def tls_connect(port, client_id, cert="client", keepalive=60, cafile="test-root-ca.crt", delay=0.0, timeout=20):
     """Connect using the client certificate cert, complete an MQTT CONNECT and
-    return the connected socket."""
-    sock = socket.create_connection(("localhost", port), timeout=20)
+    return the connected socket.
+
+    If delay is set, wait that long between the TCP connection and the TLS
+    handshake."""
+    sock = socket.create_connection(("localhost", port), timeout=timeout)
     try:
-        ssock = tls_client_context(cert=cert).wrap_socket(sock, server_hostname="localhost")
+        if delay:
+            time.sleep(delay)
+        ssock = tls_client_context(cafile=cafile, cert=cert).wrap_socket(sock, server_hostname="localhost")
     except BaseException:
         sock.close()
         raise

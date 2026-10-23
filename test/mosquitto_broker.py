@@ -119,7 +119,7 @@ class MosquittoBroker:
 
     def terminate(self):
         if self._process:
-            mosq_test.terminate_broker(self._process)
+            mosq_test.terminate_broker(self._process, timeout=self._termination_timeout)
 
     def reload(self):
         if self._process:
@@ -193,7 +193,7 @@ class MosquittoBroker:
 
     def stop(self, ex_type=None):
         if self._process:
-            timed_out, _ = mosq_test.terminate_broker(self._process)
+            timed_out, _ = mosq_test.terminate_broker(self._process, timeout=self._termination_timeout)
             logging.info(f"Stopping {self}")
             logging.info(f"Stopped {self}")
             if ex_type is not None or timed_out or (self._expect_fail == False and self._process.returncode != 0):

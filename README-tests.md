@@ -75,6 +75,31 @@ happens. Older tests that start the broker with `mosq_test.start_broker()`
 don't check its exit status, so check their output for `ERROR:
 AddressSanitizer`, `ERROR: LeakSanitizer` and `runtime error:` as well.
 
+## Stress testing TLS reloading
+
+`test/broker/08-ssl-hup-stress.py` repeatedly rotates the server certificate,
+CA file and CRL of a TLS listener, sometimes to broken or missing files, and
+sends SIGHUP to the broker, while clients keep connecting, publishing and
+receiving messages. The normal test run only runs it for 5 seconds. For longer
+runs, run it from `test/broker` with a sanitizer build, or under valgrind:
+
+```
+cd test/broker
+BUILD_ROOT=../../build-asan ./08-ssl-hup-stress.py --duration 300
+BUILD_ROOT=../../build MOSQ_USE_VALGRIND=1 ./08-ssl-hup-stress.py --duration 120
+```
+
+`--workers`, `--long-clients` and `--seed` change the workload, see `--help`.
+
+It fails if the broker crashes or doesn't exit cleanly, a sanitizer or
+valgrind error is reported, a long-lived client loses its connection, or new
+clients are refused once a valid configuration has been restored.
+Unexpected worker-thread failures and threads that fail to stop also fail the
+test. Unlike the other tests, it checks its `.vglog` file for memory errors
+and definitely or indirectly lost allocations; still-reachable allocations do
+not fail the test. If it fails, the broker log is kept in
+`08-ssl-hup-stress.log`.
+
 ## Dependencies
 
 The tests require Python 3 and CUnit to be installed.

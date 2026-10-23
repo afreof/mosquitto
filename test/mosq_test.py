@@ -228,7 +228,7 @@ def wait_for_subprocess(client,timeout=10,terminate_timeout=2):
     return rc
 
 
-def terminate_broker(broker, force=False):
+def terminate_broker(broker, force=False, timeout=10):
     if platform.system() == 'Windows' and force == False:
         evt_sent = False
         for i in range(5):
@@ -244,7 +244,7 @@ def terminate_broker(broker, force=False):
     else:
         broker.terminate()
     stde = broker_log(broker)
-    if wait_for_subprocess(broker):
+    if wait_for_subprocess(broker, timeout=timeout):
         print("broker not terminated")
         return (1, stde)
     else:
