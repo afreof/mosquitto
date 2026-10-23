@@ -28,12 +28,17 @@ set(C_SRC
 option_env(ALLOC_MISMATCH_INVALID_READ "Memory function mismatch detection." OFF)
 option_env(ALLOC_MISMATCH_ABORT "Memory function mismatch abort." OFF)
 
-if(WIN32)
+# With a static libmosquitto_common, the broker and each plugin have their own
+# copy of its globals, which AddressSanitizer reports as an ODR violation.
+if(WIN32 OR WITH_ASAN)
 	set(WITH_SHARED_LIBCOMMON_DEF ON)
 else()
 	set(WITH_SHARED_LIBCOMMON_DEF OFF)
 endif()
 option_env(WITH_SHARED_LIBCOMMON "Build libmosquitto_common as a shared library?" ${WITH_SHARED_LIBCOMMON_DEF})
+if(WITH_ASAN AND NOT WITH_SHARED_LIBCOMMON)
+	message(WARNING "WITH_ASAN without WITH_SHARED_LIBCOMMON: AddressSanitizer will report ODR violations when plugins are loaded.")
+endif()
 
 if(WITH_SHARED_LIBCOMMON)
 	add_library(libmosquitto_common SHARED

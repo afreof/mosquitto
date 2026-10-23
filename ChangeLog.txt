@@ -45,6 +45,8 @@
 - Fix tests when building with WITH_WEBSOCKETS=no. Closes #3502.
 - Fix libmosquitto_static cmake build.
 - Enable WITH_UNIX_SOCKETS on Windows.
+- Add WITH_ASAN option to the CMake build, to build with AddressSanitizer and
+  UndefinedBehaviorSanitizer for testing.
 
 
 2.1.2 - 2026-02-09

@@ -56,6 +56,7 @@ find_package(cJSON CONFIG REQUIRED)
 find_package(argon2)
 
 option_env(INC_MEMTRACK "Include memory tracking support?" ON)
+option_env(WITH_ASAN "Build with AddressSanitizer and UndefinedBehaviorSanitizer enabled? For testing only." OFF)
 option_env(WITH_BUNDLED_DEPS "Build with bundled dependencies?" ON)
 option_env(WITH_CTRL_SHELL "Include mosquitto_ctrl interactive shell support?" ON)
 option_env(WITH_DLT "Include DLT support?" OFF)
@@ -131,6 +132,15 @@ if(WITH_LTO)
 	else()
 		message(WARNING "LTO/IPO is not supported: ${output}")
 	endif()
+endif()
+
+if(WITH_ASAN)
+	if(MSVC)
+		message(FATAL_ERROR "WITH_ASAN is only supported with GCC and Clang.")
+	endif()
+	# Applied globally so that plugins and test helpers are instrumented too.
+	add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=undefined)
+	add_link_options(-fsanitize=address,undefined)
 endif()
 
 if(WITH_SOCKS)
