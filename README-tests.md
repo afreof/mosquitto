@@ -100,6 +100,24 @@ and definitely or indirectly lost allocations; still-reachable allocations do
 not fail the test. If it fails, the broker log is kept in
 `08-ssl-hup-stress.log`.
 
+## Development containers
+
+`.devcontainer/ubuntu` and `.devcontainer/alpine` define development
+containers with everything needed to build mosquitto with make and CMake and
+to run all tests, including under valgrind and with libwebsockets, and with
+the sanitizers and OpenSSL ENGINE support on Ubuntu or musl libc on Alpine.
+Open the repository in VS Code and choose "Dev Containers: Reopen in
+Container", or use the dev container CLI:
+
+```
+devcontainer up --workspace-folder . --config .devcontainer/ubuntu/devcontainer.json
+devcontainer exec --workspace-folder . --config .devcontainer/ubuntu/devcontainer.json bash
+```
+
+They work with Docker and with rootless podman. For podman, set
+`dev.containers.dockerPath` to `podman` in VS Code, or pass
+`--docker-path podman` to the CLI.
+
 ## Dependencies
 
 The tests require Python 3 and CUnit to be installed.

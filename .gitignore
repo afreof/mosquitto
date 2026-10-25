@@ -27,6 +27,7 @@ apps/mosquitto_signal/mosquitto_signal
 
 build/
 build64/
+build-devcontainer/
 
 client/mosquitto_pub
 client/mosquitto_pub.a

@@ -1,0 +1,28 @@
+{
+	// Works with Docker and with rootless podman: with podman, the dev
+	// container tools add --userns=keep-id and --security-opt label=disable
+	// themselves, because the container user isn't root.
+	"name": "Mosquitto (Alpine 3.23, musl)",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"containerUser": "dev",
+	"remoteUser": "dev",
+	// Reaps the brokers that the tests start.
+	"init": true,
+	// The socks tests use these names, which podman's /etc/hosts lacks.
+	"runArgs": ["--add-host", "ip6-localhost:::1", "--add-host", "ip6-loopback:::1"],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cmake-tools",
+				"ms-vscode.cpptools",
+				"ms-python.python"
+			],
+			"settings": {
+				// Keep the build apart from the one on the host.
+				"cmake.buildDirectory": "${workspaceFolder}/build-devcontainer/alpine"
+			}
+		}
+	}
+}
