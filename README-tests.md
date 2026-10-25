@@ -126,6 +126,54 @@ They work with Docker and with rootless podman. For podman, set
 `dev.containers.dockerPath` to `podman` in VS Code, or pass
 `--docker-path podman` to the CLI.
 
+## Testing build variants
+
+`test/build_variants.py` builds the broker with make and CMake in several
+configurations (with and without TLS, TLS-PSK, OpenSSL ENGINE support,
+builtin websockets or libwebsockets, threading, ...) and runs the tests for
+each in three modes: plain, with AddressSanitizer and
+UndefinedBehaviorSanitizer, and with every broker run under valgrind. A
+sanitizer report or a valgrind error fails the run even when the tests pass.
+It builds from a snapshot of the working tree in `build-variants/`, and skips
+the variants whose dependencies are missing:
+
+```
+test/build_variants.py --list
+test/build_variants.py -b cmake,make -V default,no-tls -m plain,asan
+test/build_variants.py -m asan,valgrind -R '08-ssl-hup' --stress-duration 60
+```
+
+`-R` and `-E` only filter the CMake builds; the make builds always run their
+complete `make test`, which takes about 30 minutes under valgrind.
+
+The development containers have everything that all variants need:
+
+```
+devcontainer exec --workspace-folder . --config .devcontainer/ubuntu/devcontainer.json \
+    test/build_variants.py -V engine,websockets-lws -m plain,asan,valgrind
+```
+
+## Testing in the CI and Docker environments
+
+`test/podman_ci.py` runs the Linux GitHub workflows in podman containers, by
+executing the `run` steps of their jobs in an image with the packages the jobs
+install. It also builds the source with the build dependencies and options of
+the Dockerfiles in `docker/`, which don't run the tests themselves, and then
+runs the tests, and it can run `test/build_variants.py` in the development
+containers, e.g. to cover the libwebsockets and OpenSSL ENGINE variants:
+
+```
+test/podman_ci.py --list
+test/podman_ci.py linux linux-asan mosquitto-make docker-local
+test/podman_ci.py variants-ubuntu --variants-args="-V engine,websockets-lws"
+test/podman_ci.py --shell variants-alpine
+```
+
+The summary shows how the tests matching `--watch` (by default the SIGHUP
+reload tests) ended in each job, to spot tests that are skipped or not run
+in an environment, and which packages were added to a Dockerfile's to be able
+to run the tests.
+
 ## Dependencies
 
 The tests require Python 3 and CUnit to be installed.

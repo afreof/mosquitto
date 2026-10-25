@@ -1,6 +1,6 @@
 # Development environment with everything needed to build all variants of
 # mosquitto with make and CMake and to run all its tests, including under
-# valgrind and with the sanitizers.
+# valgrind and with the sanitizers. Also used by test/podman_ci.py.
 FROM docker.io/library/ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive

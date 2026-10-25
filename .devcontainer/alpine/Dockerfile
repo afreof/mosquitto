@@ -1,6 +1,6 @@
 # Development environment with musl libc, like the Docker images in docker/,
 # with everything needed to build mosquitto with make and CMake and to run its
-# tests, including under valgrind.
+# tests, including under valgrind. Also used by test/podman_ci.py.
 FROM docker.io/library/alpine:3.23
 
 # cjson-static: the CMake build looks for cJSON with find_package(cJSON), which
