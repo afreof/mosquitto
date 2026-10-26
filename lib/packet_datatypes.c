@@ -71,8 +71,10 @@ int packet__read_bytes(struct mosquitto__packet_in *packet, void *bytes, uint32_
 		return MOSQ_ERR_MALFORMED_PACKET;
 	}
 
-	memcpy(bytes, &(packet->payload[packet->pos]), count);
-	packet->pos += count;
+	if(count > 0){
+		memcpy(bytes, &(packet->payload[packet->pos]), count);
+		packet->pos += count;
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }

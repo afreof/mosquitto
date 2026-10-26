@@ -51,7 +51,9 @@ int mosquitto_base64_encode(const unsigned char *in, size_t in_len, char **encod
 			BIO_get_mem_ptr(b64, &bptr);
 			*encoded = mosquitto_malloc(bptr->length+1);
 			if(*encoded){
-				memcpy(*encoded, bptr->data, bptr->length);
+				if(bptr->length > 0){
+					memcpy(*encoded, bptr->data, bptr->length);
+				}
 				(*encoded)[bptr->length] = '\0';
 				rc = 0;
 			}
