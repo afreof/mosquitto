@@ -30,6 +30,7 @@ Contributors:
 #  include <mach/mach_time.h>
 #endif
 
+#include "alias_mosq.h"
 #include "logging_mosq.h"
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
@@ -312,10 +313,16 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto_FREE(mosq->password);
 	mosquitto_FREE(mosq->host);
 	mosquitto_FREE(mosq->bind_address);
+#ifdef WITH_SOCKS
+	mosquitto_FREE(mosq->socks5_host);
+	mosquitto_FREE(mosq->socks5_username);
+	mosquitto_FREE(mosq->socks5_password);
+#endif
 	mosquitto_FREE(mosq->in_packet.packet_buffer);
 	mosq->in_packet.packet_buffer_size = 4096;
 
 	mosquitto_property_free_all(&mosq->connect_properties);
+	alias__free_all(mosq);
 
 	packet__cleanup_all_no_locks(mosq);
 
