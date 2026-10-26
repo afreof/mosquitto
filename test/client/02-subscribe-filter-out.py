@@ -6,7 +6,7 @@ from mosq_test_helper import *
 
 mosq_test.require_features(["WITH_BROKER"])
 
-def do_test(port, proto_ver):
+def do_test(broker, port, proto_ver):
     rc = 1
 
     if proto_ver == 5:
@@ -34,8 +34,7 @@ def do_test(port, proto_ver):
 
     sock = mosq_test.pub_helper(port=port, proto_ver=proto_ver)
 
-    sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-    time.sleep(0.1)
+    sub = broker.start_subscriber(cmd, env)
     sock.send(publish_packet1)
     sock.send(publish_packet2)
     sock.send(publish_packet1)
@@ -58,6 +57,6 @@ if __name__ == '__main__':
     port = mosq_test.get_port()
     broker = MosquittoBroker(port=port)
     with broker:
-        do_test(port, proto_ver=3)
-        do_test(port, proto_ver=4)
-        do_test(port, proto_ver=5)
+        do_test(broker, port, proto_ver=3)
+        do_test(broker, port, proto_ver=4)
+        do_test(broker, port, proto_ver=5)

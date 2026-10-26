@@ -1,7 +1,7 @@
 """
 """
 
-from subprocess import Popen
+from subprocess import PIPE, Popen
 from typing import Optional, Union
 
 import logging
@@ -136,14 +136,31 @@ class MosquittoBroker:
         fd = self.process.mosq_log.fileno()
         return os.pread(fd, os.fstat(fd).st_size, 0).decode("utf-8", errors="replace")
 
+    def _log_count(self, pattern):
+        return len(re.findall(pattern, self._peek_log()))
+
     def _wait_for_log(self, pattern, count, timeout, action):
         deadline = time.monotonic() + timeout
-        while len(re.findall(pattern, self._peek_log())) < count:
+        while self._log_count(pattern) < count:
             if not self.is_running():
                 raise RuntimeError(f"{self} exited while waiting to {action}")
             if time.monotonic() > deadline:
                 raise TimeoutError(f"{self} did not {action} within {timeout}s")
             time.sleep(0.05)
+
+    def start_subscriber(self, cmd, env=None, timeout=10):
+        """Start a subscribing client and wait until the broker has received
+        its SUBSCRIBE. The client is killed if that doesn't happen."""
+        pattern = "Received SUBSCRIBE"
+        count = self._log_count(pattern)
+        sub = Popen(cmd, stdout=PIPE, stderr=PIPE, env=env)
+        try:
+            self._wait_for_log(pattern, count + 1, timeout, "receive SUBSCRIBE")
+        except BaseException:
+            sub.kill()
+            sub.communicate()
+            raise
+        return sub
 
     def wait_until_running(self, timeout=10):
         """Wait until the broker has opened all of its listeners.
@@ -162,7 +179,7 @@ class MosquittoBroker:
         afterwards is handled with the reloaded configuration.
         """
         pattern = re.escape("Reloading config.")
-        count = len(re.findall(pattern, self._peek_log()))
+        count = self._log_count(pattern)
         self.reload()
         self._wait_for_log(pattern, count + 1, timeout, "reload")
 

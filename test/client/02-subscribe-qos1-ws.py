@@ -49,12 +49,9 @@ def do_test(proto_ver):
     )
     broker = MosquittoBroker(config=broker_config)
     with broker:
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=ports[1], use_conf=True)
-
         sock = mosq_test.pub_helper(port=ports[1], proto_ver=proto_ver)
 
-        sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-        time.sleep(0.1)
+        sub = broker.start_subscriber(cmd, env)
         sock.send(publish_packet_s)
         mosq_test.expect_packet(sock, "puback", puback_packet_s)
         if mosq_test.wait_for_subprocess(sub):
