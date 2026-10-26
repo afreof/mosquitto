@@ -249,7 +249,7 @@ def run_client(port):
             ]
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         logfile = 'seq.'+str(vg_index)+'.vglog'
-        cmd = ['/snap/bin/valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+logfile] + cmd
+        cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+logfile] + cmd
         vg_logfiles.append(logfile)
         vg_index += 1
 
