@@ -20,6 +20,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 			abort();
 		}
 		mosquitto_unsubscribe_v5(mosq, NULL, "unsubscribe/test", proplist);
+		mosquitto_property_free_all(&proplist);
 	}
 }
 

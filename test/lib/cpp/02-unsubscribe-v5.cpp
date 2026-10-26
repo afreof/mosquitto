@@ -31,6 +31,7 @@ void mosquittopp_test::on_connect(int rc)
 			abort();
 		}
 		unsubscribe_v5(NULL, "unsubscribe/test", proplist);
+		mosquitto_property_free_all(&proplist);
 	}
 }
 

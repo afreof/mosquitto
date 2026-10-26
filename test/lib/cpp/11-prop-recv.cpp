@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	while(run == -1){
 		rc = mosq->loop();
 		if(rc != MOSQ_ERR_SUCCESS){
-			return rc;
+			run = rc;
 		}
 	}
 	delete mosq;
