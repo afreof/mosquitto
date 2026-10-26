@@ -11,7 +11,9 @@ if sys.version < '2.7':
 def do_test(client_cmd):
     port = mosq_test.get_port()
 
-    ssock = mosq_test.listen_sock(port, f"{ssl_dir}/all-ca.crt", f"{ssl_dir}/server.crt", f"{ssl_dir}/server.key", True)
+    # The timeout covers the client start and the handshake, which can be slow
+    # under valgrind.
+    ssock = mosq_test.listen_sock(port, f"{ssl_dir}/all-ca.crt", f"{ssl_dir}/server.crt", f"{ssl_dir}/server.key", True, timeout=30)
 
     client_args = [Path(mosq_test.get_build_root(), "test", "lib") / client_cmd, str(port)]
     client = mosq_test.start_client(filename=str(client_cmd).replace('/', '-'), cmd=client_args)
@@ -29,12 +31,11 @@ def do_test(client_cmd):
         time.sleep(1.0)
         if mosq_test.wait_for_subprocess(client):
             print("test client not finished")
-            rc=1
         ssock.close()
 
-    if client.returncode == 0:
-        exit(0)
-    else:
+    if client.returncode != 0:
+        print(f"{client_cmd} failed with {client.returncode}")
+        print(client.stdout.read().decode("utf-8", errors="replace"))
         exit(1)
 
 do_test(Path("c", mosq_test.get_build_type(), "08-ssl-fake-cacert.exe"))

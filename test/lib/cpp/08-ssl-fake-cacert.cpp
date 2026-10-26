@@ -46,12 +46,16 @@ int main(int argc, char *argv[])
 	cat_sourcedir_with_relpath(keyfile, "/../../ssl/client.key");
 
 	mosq->tls_set(cafile, NULL, certfile, keyfile);
-	mosq->connect("localhost", port, 60);
-
-	rc = mosq->loop_forever();
+	rc = mosq->connect("localhost", port, 60);
+	if(rc == MOSQ_ERR_SUCCESS){
+		rc = mosq->loop_forever();
+	}
+	int err = errno;
 	delete mosq;
 	mosqpp::lib_cleanup();
-	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
+	/* The handshake fails in connect() if the server's reply arrives before it
+	 * returns, e.g. under valgrind, and in the loop otherwise. */
+	if(rc == MOSQ_ERR_TLS || (rc == MOSQ_ERR_ERRNO && err == EPROTO)){
 		return 0;
 	}else{
 		return 1;

@@ -20,6 +20,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 int main(int argc, char *argv[])
 {
 	int rc;
+	int err;
 	struct mosquitto *mosq;
 	int port;
 
@@ -44,14 +45,15 @@ int main(int argc, char *argv[])
 	mosquitto_connect_callback_set(mosq, on_connect);
 
 	rc = mosquitto_connect(mosq, "localhost", port, 60);
-	if(rc != MOSQ_ERR_SUCCESS){
-		return rc;
+	if(rc == MOSQ_ERR_SUCCESS){
+		rc = mosquitto_loop_forever(mosq, -1, 1);
 	}
-
-	rc = mosquitto_loop_forever(mosq, -1, 1);
+	err = errno;
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
-	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
+	/* The handshake fails in mosquitto_connect() if the server's reply arrives
+	 * before it returns, e.g. under valgrind, and in the loop otherwise. */
+	if(rc == MOSQ_ERR_TLS || (rc == MOSQ_ERR_ERRNO && err == EPROTO)){
 		return 0;
 	}else{
 		return 1;
