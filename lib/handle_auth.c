@@ -63,6 +63,8 @@ int handle__auth(struct mosquitto *mosq)
 	mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, &auth_method, false);
 	mosquitto_property_read_binary(properties, MQTT_PROP_AUTHENTICATION_DATA, &auth_data, &auth_data_len, false);
 	rc = callback__on_ext_auth(mosq, auth_method, auth_data_len, auth_data, properties);
+	mosquitto_FREE(auth_method);
+	mosquitto_FREE(auth_data);
 	mosquitto_property_free_all(&properties);
 
 	return rc;
