@@ -340,7 +340,14 @@ void listeners__stop(void)
 	for(int i=0; i<db.config->listener_count; i++){
 #if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
 		if(db.config->listeners[i].ws_context){
+			struct libws_mqtt_hack *user = lws_context_user(db.config->listeners[i].ws_context);
+
 			lws_context_destroy(db.config->listeners[i].ws_context);
+			if(user){
+				/* Allocated by realpath() or _fullpath(). */
+				free(user->http_dir);
+				mosquitto_FREE(user);
+			}
 		}
 		mosquitto_FREE(db.config->listeners[i].ws_protocol);
 #endif

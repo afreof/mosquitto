@@ -760,6 +760,10 @@ void mosq_websockets_init(struct mosquitto__listener *listener, const struct mos
 	listener->ws_in_init = true;
 	listener->ws_context = lws_create_context(&info);
 	listener->ws_in_init = false;
+	if(!listener->ws_context){
+		free(user->http_dir);
+		mosquitto_FREE(user);
+	}
 }
 
 #endif
