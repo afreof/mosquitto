@@ -219,6 +219,18 @@ static int listeners__start_local_only(void)
 	count++;
 #endif
 
+	/* Discard any default listener created by listener options in the config.
+	 * Security options that a plugin refers to have to stay allocated. */
+	for(int i=0; i<db.config->listener_count; i++){
+		if(db.config->listeners[i].security_options
+				&& db.config->listeners[i].security_options->plugin_count > 0){
+
+			db.config->listeners[i].security_options = NULL;
+		}
+		config__listener_cleanup(&db.config->listeners[i]);
+	}
+	db.config->listener_count = 0;
+
 	listeners = mosquitto_realloc(db.config->listeners, count*sizeof(struct mosquitto__listener));
 	if(listeners == NULL){
 		return MOSQ_ERR_NOMEM;

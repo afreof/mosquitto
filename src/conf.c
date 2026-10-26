@@ -395,6 +395,55 @@ void config__init(struct mosquitto__config *config)
 }
 
 
+void config__listener_cleanup(struct mosquitto__listener *listener)
+{
+	mosquitto_FREE(listener->host);
+	mosquitto_FREE(listener->bind_interface);
+	mosquitto_FREE(listener->mount_point);
+	mosquitto_FREE(listener->socks);
+	if(listener->security_options){
+		mosquitto_FREE(listener->security_options->auto_id_prefix);
+		mosquitto_FREE(listener->security_options->acl_data.acl_file);
+		mosquitto_FREE(listener->security_options->password_data.password_file);
+		mosquitto_FREE(listener->security_options->psk_file);
+		mosquitto_FREE(listener->security_options->plugins);
+		mosquitto_FREE(listener->security_options);
+	}
+#ifdef WITH_TLS
+	mosquitto_FREE(listener->cafile);
+	mosquitto_FREE(listener->capath);
+	mosquitto_FREE(listener->certfile);
+	mosquitto_FREE(listener->keyfile);
+	mosquitto_FREE(listener->ciphers);
+	mosquitto_FREE(listener->ciphers_tls13);
+	mosquitto_FREE(listener->psk_hint);
+	mosquitto_FREE(listener->crlfile);
+	mosquitto_FREE(listener->tls_version);
+	mosquitto_FREE(listener->tls_engine);
+	mosquitto_FREE(listener->tls_engine_kpass_sha1);
+#if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
+	if(!listener->ws_context) /* libwebsockets frees its own SSL_CTX */
+#endif
+	{
+		SSL_CTX_free(listener->ssl_ctx);
+		listener->ssl_ctx = NULL;
+	}
+#endif
+#if defined(WITH_WEBSOCKETS) || defined(WITH_HTTP_API)
+	mosquitto_FREE(listener->http_dir);
+#endif
+#ifdef WITH_WEBSOCKETS
+	for(int j=0; j<listener->ws_origin_count; j++){
+		mosquitto_FREE(listener->ws_origins[j]);
+	}
+	mosquitto_FREE(listener->ws_origins);
+#endif
+#ifdef WITH_UNIX_SOCKETS
+	mosquitto_FREE(listener->unix_socket_path);
+#endif
+}
+
+
 void config__cleanup(struct mosquitto__config *config)
 {
 	mosquitto_FREE(config->clientid_prefixes);
@@ -411,50 +460,7 @@ void config__cleanup(struct mosquitto__config *config)
 	mosquitto_FREE(config->log_timestamp_format);
 	if(config->listeners){
 		for(int i=0; i<config->listener_count; i++){
-			mosquitto_FREE(config->listeners[i].host);
-			mosquitto_FREE(config->listeners[i].bind_interface);
-			mosquitto_FREE(config->listeners[i].mount_point);
-			mosquitto_FREE(config->listeners[i].socks);
-			if(config->listeners[i].security_options){
-				mosquitto_FREE(config->listeners[i].security_options->auto_id_prefix);
-				mosquitto_FREE(config->listeners[i].security_options->acl_data.acl_file);
-				mosquitto_FREE(config->listeners[i].security_options->password_data.password_file);
-				mosquitto_FREE(config->listeners[i].security_options->psk_file);
-				mosquitto_FREE(config->listeners[i].security_options->plugins);
-				mosquitto_FREE(config->listeners[i].security_options);
-			}
-#ifdef WITH_TLS
-			mosquitto_FREE(config->listeners[i].cafile);
-			mosquitto_FREE(config->listeners[i].capath);
-			mosquitto_FREE(config->listeners[i].certfile);
-			mosquitto_FREE(config->listeners[i].keyfile);
-			mosquitto_FREE(config->listeners[i].ciphers);
-			mosquitto_FREE(config->listeners[i].ciphers_tls13);
-			mosquitto_FREE(config->listeners[i].psk_hint);
-			mosquitto_FREE(config->listeners[i].crlfile);
-			mosquitto_FREE(config->listeners[i].tls_version);
-			mosquitto_FREE(config->listeners[i].tls_engine);
-			mosquitto_FREE(config->listeners[i].tls_engine_kpass_sha1);
-#if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
-			if(!config->listeners[i].ws_context) /* libwebsockets frees its own SSL_CTX */
-#endif
-			{
-				SSL_CTX_free(config->listeners[i].ssl_ctx);
-				config->listeners[i].ssl_ctx = NULL;
-			}
-#endif
-#if defined(WITH_WEBSOCKETS) || defined(WITH_HTTP_API)
-			mosquitto_FREE(config->listeners[i].http_dir);
-#endif
-#ifdef WITH_WEBSOCKETS
-			for(int j=0; j<config->listeners[i].ws_origin_count; j++){
-				mosquitto_FREE(config->listeners[i].ws_origins[j]);
-			}
-			mosquitto_FREE(config->listeners[i].ws_origins);
-#endif
-#ifdef WITH_UNIX_SOCKETS
-			mosquitto_FREE(config->listeners[i].unix_socket_path);
-#endif
+			config__listener_cleanup(&config->listeners[i]);
 		}
 		mosquitto_FREE(config->listeners);
 	}
