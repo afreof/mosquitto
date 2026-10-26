@@ -335,6 +335,7 @@ endif
 	./20-sparkplug-aware.py
 
 21:
+ifeq ($(WITH_WEBSOCKETS),yes)
 	./21-proxy-bad-version.py
 	./21-proxy-v1-bad.py
 	./21-proxy-v1-success.py
@@ -344,11 +345,10 @@ endif
 	./21-proxy-v2-ipv4.py
 	./21-proxy-v2-ipv6.py
 	./21-proxy-v2-unix.py
-ifneq ($(WITH_WEBSOCKETS),no)
 	./21-proxy-v2-websockets.py
-endif
 	./21-proxy-v2-long-tlv.py
 	./21-proxy-v2-lost-connection.py
+ifeq ($(WITH_TLS),yes)
 	./21-proxy-v2-ssl-require-cert-failure.py
 	./21-proxy-v2-ssl-require-cert-success.py
 	./21-proxy-v2-ssl-common-name-failure.py
@@ -356,6 +356,8 @@ endif
 	./21-proxy-v2-ssl-cipher.py
 	./21-proxy-v2-ssl-require-tls-failure.py
 	./21-proxy-v2-ssl-require-tls-success.py
+endif
+endif
 
 22:
 ifeq ($(WITH_HTTP_API),yes)
