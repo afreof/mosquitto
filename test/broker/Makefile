@@ -35,6 +35,9 @@ msg_sequence_test:
 	./01-connect-listener-allow-anonymous.py
 	./01-connect-max-connections.py
 	./01-connect-max-keepalive.py
+ifeq ($(WITH_SYS_TREE),yes)
+	./01-connect-sys-clients-count.py
+endif
 	./01-connect-take-over.py
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-or-anon.py

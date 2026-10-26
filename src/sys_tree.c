@@ -151,6 +151,21 @@ time_t broker_uptime(void)
 }
 
 
+/* Sockets that haven't completed CONNECT yet aren't clients. */
+static int64_t count_connected_clients(void)
+{
+	struct mosquitto *context, *ctxt_tmp;
+	int64_t count = 0;
+
+	HASH_ITER(hh_sock, db.contexts_by_sock, context, ctxt_tmp){
+		if(context->in_by_id){
+			count++;
+		}
+	}
+	return count;
+}
+
+
 static void calc_load(char *buf, double exponent, double i_mult, struct metric_load *m, bool force)
 {
 	double new_value;
@@ -255,8 +270,8 @@ void sys_tree__update(bool force)
 #endif
 		metrics[mosq_gauge_clients_total].next = HASH_CNT(hh_id, db.contexts_by_id);
 		metrics[mosq_counter_clients_maximum].next = HASH_CNT(hh_id, db.contexts_by_id);
-		metrics[mosq_gauge_clients_connected].next = HASH_CNT(hh_sock, db.contexts_by_sock);
-		metrics[mosq_gauge_clients_disconnected].next = HASH_CNT(hh_id, db.contexts_by_id) - HASH_CNT(hh_sock, db.contexts_by_sock);
+		metrics[mosq_gauge_clients_connected].next = count_connected_clients();
+		metrics[mosq_gauge_clients_disconnected].next = metrics[mosq_gauge_clients_total].next - metrics[mosq_gauge_clients_connected].next;
 
 		/* Handle loads first, because they reference other metrics and need next != current */
 		if(db.now_s > last_update){

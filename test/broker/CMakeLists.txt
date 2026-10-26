@@ -40,6 +40,7 @@ add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-global-max-connections.py"
 add_python_test(PY_TEST_NAMES ${PREFIX} 2 "01-connect-listener-allow-anonymous.py")
 add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-max-connections.py")
 add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-max-keepalive.py")
+add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-sys-clients-count.py")
 add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-take-over.py")
 add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-uname-no-password-denied.py")
 add_python_test(PY_TEST_NAMES ${PREFIX} 1 "01-connect-uname-or-anon.py")
