@@ -47,17 +47,17 @@ def do_test(proto_ver):
 
     broker_config = BrokerConfig(
         listeners = [
+            ListenerConfig(port=port),
             ListenerConfig(
                 port=0,
                 address=f"{port}.sock"
             ),
-            ListenerConfig(port=port),
         ],
         allow_anonymous=True,
     )
     broker = MosquittoBroker(config=broker_config)
+    broker.add_extra_file(f"{port}.sock")
     with broker:
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port, use_conf=True)
         sock = mosq_test.sub_helper(port=port, topic="#", qos=1, proto_ver=proto_ver)
 
         pub = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
