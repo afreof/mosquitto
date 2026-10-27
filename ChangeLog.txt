@@ -9,6 +9,8 @@
   main loop was busy could wait for the next timeout (up to 10 seconds, or a
   day without `$SYS` and websockets), a SIGHUP during a reload was lost, and a
   signal during startup killed the broker after its listeners had started.
+- Fix bridges reconnecting late in builds without websockets, when the broker
+  was woken up by something else before the bridge restart time.
 - Fix MOSQ_EVT_DISCONNECT being called before MOSQ_EVT_ACL_CHECK for the will
   of that client. Closes #3487.
 - Fix password length not being passed to MOSQ_EVT_BASIC_AUTH events.
