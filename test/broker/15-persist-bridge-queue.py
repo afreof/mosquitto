@@ -12,6 +12,8 @@
 
 from mosq_test_helper import *
 
+mosq_test.require_features(["INC_BRIDGE_SUPPORT"])
+
 persist_help = persist_module()
 
 num_messages = 100
@@ -75,6 +77,8 @@ def do_test(test_case_name: str, bridging_add_config: dict, target_add_config: d
     num_messages = 100
 
     broker = None
+    bridge_target_broker = None
+    stde = stde2 = stde3 = None
 
     try:
         bridge_target_broker = mosq_test.start_broker(
