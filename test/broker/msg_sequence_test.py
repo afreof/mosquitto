@@ -259,6 +259,8 @@ def do_test(hostname, port, protocol):
 
             for t in tests:
                 tname = group_name + " " + t["name"]
+                if not mosq_test.check_features(t.get("features", [])):
+                    continue
                 try:
                     proto_ver = t["ver"]
                 except KeyError:

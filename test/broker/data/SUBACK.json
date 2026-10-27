@@ -46,19 +46,19 @@
 				{"type":"send", "payload":"90 r3 m1 00"},
 				{"type":"recv", "payload":"E0 r1 82"}
 			]},
-			{ "name": "91", "msgs": [
+			{ "name": "91", "features": ["INC_BRIDGE_SUPPORT"], "msgs": [
 				{"type":"send", "payload":"91 r3 m1 00"},
 				{"type":"recv", "payload":"E0 r1 81"}
 			]},
-			{ "name": "92", "msgs": [
+			{ "name": "92", "features": ["INC_BRIDGE_SUPPORT"], "msgs": [
 				{"type":"send", "payload":"92 r3 m1 00"},
 				{"type":"recv", "payload":"E0 r1 81"}
 			]},
-			{ "name": "94", "msgs": [
+			{ "name": "94", "features": ["INC_BRIDGE_SUPPORT"], "msgs": [
 				{"type":"send", "payload":"94 r3 m1 00"},
 				{"type":"recv", "payload":"E0 r1 81"}
 			]},
-			{ "name": "98", "msgs": [
+			{ "name": "98", "features": ["INC_BRIDGE_SUPPORT"], "msgs": [
 				{"type":"send", "payload":"98 r3 m1 00"},
 				{"type":"recv", "payload":"E0 r1 81"}
 			]},
