@@ -40,6 +40,9 @@ static bool flag_db_backup = false;
 #endif
 static bool flag_tree_print = false;
 static bool flag_xtreport = false;
+#ifdef WITH_SIGNAL_WAIT_MASK
+static sigset_t wait_sigmask;
+#endif
 
 
 static void handle_signal(int signal)
@@ -71,6 +74,54 @@ static void handle_signal(int signal)
 }
 
 
+/* Block the handled signals before any listener (or listener thread) starts.
+ * A signal sent in the meantime stays pending until the main loop waits for
+ * the first time, when the handlers are installed. */
+void signal__block(void)
+{
+#ifdef WITH_SIGNAL_WAIT_MASK
+	const int signals[] = {
+		SIGINT, SIGTERM, SIGHUP, SIGUSR1, SIGUSR2,
+#ifdef SIGRTMIN
+		SIGRTMIN,
+#endif
+	};
+	sigset_t blocked;
+
+	sigemptyset(&blocked);
+	for(size_t i=0; i<sizeof(signals)/sizeof(signals[0]); i++){
+		sigaddset(&blocked, signals[i]);
+	}
+	sigprocmask(SIG_BLOCK, &blocked, &wait_sigmask);
+	for(size_t i=0; i<sizeof(signals)/sizeof(signals[0]); i++){
+		sigdelset(&wait_sigmask, signals[i]);
+	}
+#endif
+}
+
+
+#ifdef WITH_SIGNAL_WAIT_MASK
+const sigset_t *signal__wait_mask(void)
+{
+	return &wait_sigmask;
+}
+#endif
+
+
+/* epoll_pwait() and ppoll() return ready events in preference to a pending
+ * signal, and then block it again, so a busy broker would never handle it.
+ * Unblock the signals briefly to deliver the ones that are still pending. */
+static void deliver_pending_signals(void)
+{
+#ifdef WITH_SIGNAL_WAIT_MASK
+	sigset_t blocked;
+
+	sigprocmask(SIG_SETMASK, &wait_sigmask, &blocked);
+	sigprocmask(SIG_SETMASK, &blocked, NULL);
+#endif
+}
+
+
 void signal__setup(void)
 {
 	signal(SIGINT, handle_signal);
@@ -94,6 +145,7 @@ void signal__setup(void)
 
 int signal__flag_check(void)
 {
+	deliver_pending_signals();
 #ifdef WITH_PERSISTENCE
 	if(flag_db_backup){
 		persist__backup(false);

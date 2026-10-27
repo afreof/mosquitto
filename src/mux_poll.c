@@ -207,7 +207,13 @@ int mux_poll__handle(struct mosquitto__listener_sock *listensock, int listensock
 	timeout = db.next_event_ms;
 #endif
 
-#ifndef WIN32
+#ifdef WITH_SIGNAL_WAIT_MASK
+	struct timespec ts = {
+		.tv_sec = timeout / 1000,
+		.tv_nsec = (timeout % 1000) * 1000000,
+	};
+	fdcount = ppoll(pollfds, pollfd_current_max+1, &ts, signal__wait_mask());
+#elif !defined(WIN32)
 	fdcount = poll(pollfds, pollfd_current_max+1, timeout);
 #else
 	fdcount = WSAPoll(pollfds, pollfd_current_max+1, timeout);
@@ -226,7 +232,7 @@ int mux_poll__handle(struct mosquitto__listener_sock *listensock, int listensock
 			Sleep(10);
 		}else
 #  endif
-		{
+		if(errno != EINTR){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error in poll: %s.", strerror(errno));
 		}
 	}else{

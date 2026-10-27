@@ -162,9 +162,9 @@ int mux_epoll__handle(void)
 
 	memset(&ev, 0, sizeof(struct epoll_event));
 #if defined(WITH_WEBSOCKETS)
-	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, 100);
+	event_count = epoll_pwait(db.epollfd, ep_events, MAX_EVENTS, 100, signal__wait_mask());
 #else
-	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, db.next_event_ms);
+	event_count = epoll_pwait(db.epollfd, ep_events, MAX_EVENTS, db.next_event_ms, signal__wait_mask());
 #endif
 
 	db.now_s = mosquitto_time();

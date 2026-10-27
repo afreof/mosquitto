@@ -946,6 +946,16 @@ void session_expiry__send_all(void);
 /* ============================================================
  * Signals
  * ============================================================ */
+/* With epoll, or poll on Linux, the signals handled by the broker are blocked
+ * except while the main loop waits for events. A signal that arrives while the
+ * main loop is busy then interrupts the next wait, rather than being noticed
+ * only after the wait has timed out. */
+#if defined(WITH_EPOLL) || (defined(__linux__) && !defined(WITH_KQUEUE))
+#  define WITH_SIGNAL_WAIT_MASK
+#  include <signal.h>
+const sigset_t *signal__wait_mask(void);
+#endif
+void signal__block(void);
 void signal__setup(void);
 int signal__flag_check(void);
 

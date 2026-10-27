@@ -556,6 +556,7 @@ int main(int argc, char *argv[])
 		return rc;
 	}
 
+	signal__block();
 	rc = listeners__start();
 	if(rc){
 		post_shutdown_cleanup();
