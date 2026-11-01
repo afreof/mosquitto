@@ -21,8 +21,10 @@ trap "kill $MOSQ_PID" EXIT
 
 
 # Simple subscribe test - single message from $SYS
-${BASE_PATH}/client/mosquitto_sub --ws -p ${PORT} -W ${SUB_TIMEOUT} -C 1 -t '$SYS/broker/version' >/dev/null
-echo "Simple subscribe ok"
+if [ "${WITH_SYS_TREE}" != "no" ] && [ "${WITH_SYS_TREE}" != "OFF" ]; then
+	${BASE_PATH}/client/mosquitto_sub --ws -p ${PORT} -W ${SUB_TIMEOUT} -C 1 -t '$SYS/broker/version' >/dev/null
+	echo "Simple subscribe ok"
+fi
 
 # Simple publish/subscribe test - single message from mosquitto_pub
 ${BASE_PATH}/client/mosquitto_sub --ws -p ${PORT} -W ${SUB_TIMEOUT} -C 1 -t 'single/test' >/dev/null &
@@ -40,9 +42,12 @@ kill ${SUB_PID} 2>/dev/null || true
 echo "File publish ok"
 
 # Publish a file from stdin and subscribe, do we get at least that many lines?
-export TEST_LINES=$(wc -l test.sh | cut -d' ' -f1)
-${BASE_PATH}/client/mosquitto_sub --ws -p ${PORT} -W ${SUB_TIMEOUT} -C ${TEST_LINES} -t 'file-publish' >/dev/null &
-export SUB_PID=$!
-${BASE_PATH}/client/mosquitto_pub --ws -p ${PORT} -t 'file-publish' -l < ./test.sh
-kill ${SUB_PID} 2>/dev/null || true
-echo "stdin publish ok"
+# '-l' needs threading support.
+if [ "${WITH_THREADING}" != "no" ] && [ "${WITH_THREADING}" != "OFF" ]; then
+	export TEST_LINES=$(wc -l test.sh | cut -d' ' -f1)
+	${BASE_PATH}/client/mosquitto_sub --ws -p ${PORT} -W ${SUB_TIMEOUT} -C ${TEST_LINES} -t 'file-publish' >/dev/null &
+	export SUB_PID=$!
+	${BASE_PATH}/client/mosquitto_pub --ws -p ${PORT} -t 'file-publish' -l < ./test.sh
+	kill ${SUB_PID} 2>/dev/null || true
+	echo "stdin publish ok"
+fi

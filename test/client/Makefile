@@ -8,9 +8,9 @@ all :
 
 check : test
 test : 02 03 04
-	./test.sh
+	WITH_SYS_TREE=$(WITH_SYS_TREE) WITH_THREADING=$(WITH_THREADING) ./test.sh
 ifeq ($(WITH_WEBSOCKETS),yes)
-	./test-ws.sh
+	WITH_SYS_TREE=$(WITH_SYS_TREE) WITH_THREADING=$(WITH_THREADING) ./test-ws.sh
 endif
 
 test-compile:
@@ -84,9 +84,9 @@ endif
 	./04-rr-retain-handling.py
 
 ptest :
-	./test.sh
+	WITH_SYS_TREE=$(WITH_SYS_TREE) WITH_THREADING=$(WITH_THREADING) ./test.sh
 ifeq ($(WITH_WEBSOCKETS),yes)
-	./test-ws.sh
+	WITH_SYS_TREE=$(WITH_SYS_TREE) WITH_THREADING=$(WITH_THREADING) ./test-ws.sh
 endif
 	./test.py
 
