@@ -1070,13 +1070,26 @@ def check_features(features):
             requirement = "OFF"
 
         env = os.environ.get(feature)
+        # make exports the values of config.mk, e.g. WITH_TLS=no or
+        # WITH_WEBSOCKETS=lws, rather than the ON/OFF that CMake passes.
+        env = {"yes": "ON", "no": "OFF", "lws": "ON"}.get(env, env)
         if env is not None and env != requirement:
             return False
     return True
 
+def skip_test(reason):
+    """Skip the test. ctest and ptest.py report exit status 77 as a skipped
+    test, but make has no notion of skipped tests, so exit successfully when
+    run directly from a make recipe."""
+    print(f"Skipping test: {reason}")
+    if os.environ.get("MAKELEVEL") is not None:
+        sys.exit(0)
+    sys.exit(77)
+
 def require_features(features):
-    if not check_features(features):
-        exit(77)
+    missing = [f for f in features if not check_features([f])]
+    if missing:
+        skip_test(f"requires {', '.join(missing)}")
 
 @atexit.register
 def test_cleanup():

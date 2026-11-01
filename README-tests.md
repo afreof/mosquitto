@@ -12,6 +12,14 @@ make check
 The tests run in series and due to the nature of some of the tests being made
 can take a while.
 
+Tests that need a feature the build doesn't have are skipped. They find out
+from `WITH_*` environment variables, which CMake sets for ctest, and which
+make sets for the options given on its command line, e.g.
+`make WITH_TLS=no test`, but not for those only changed in `config.mk`. make
+has no notion of skipped tests, so `make test` only prints
+`Skipping test: ...` for them, while `make ptest` and ctest report them as
+skipped.
+
 ## Parallel Tests
 
 To run the tests with some parallelism, use

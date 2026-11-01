@@ -9,6 +9,9 @@ import sys
 
 COLOUR_PASS = 34
 COLOUR_FAIL = 124
+COLOUR_SKIP = 244
+# Exit status of a test that was skipped, as with ctest's SKIP_RETURN_CODE.
+SKIP_RETURN_CODE = 77
 
 class PTestCase():
     def __init__(self, path, ports, cmd, args=None):
@@ -30,7 +33,12 @@ class PTestCase():
         for p in self.mosq_port:
             self.run_args.append(str(p))
 
-        self.proc = subprocess.Popen(self.run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.path)
+        # Tests exit successfully instead of reporting that they were skipped
+        # when run from a make recipe, see mosq_test.skip_test().
+        env = os.environ.copy()
+        env.pop("MAKELEVEL", None)
+        self.proc = subprocess.Popen(self.run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.path,
+                                     env=env)
         self.start_time = time.time()
 
     def print_result(self, attempt, col):
@@ -39,6 +47,8 @@ class PTestCase():
             stat = "✓"
         elif col == COLOUR_FAIL:
             stat = "✗"
+        elif col == COLOUR_SKIP:
+            stat = "-"
         else:
             stat = attempt
 
@@ -120,6 +130,7 @@ class PTest():
         passed = 0
         retried = 0
         failed = 0
+        skipped = 0
 
         failed_tests = []
         failed_tests_output = []
@@ -149,6 +160,11 @@ class PTest():
                     t.proc.terminate()
                     t.proc.wait()
 
+                    if t.proc.returncode == SKIP_RETURN_CODE:
+                        skipped += 1
+                        t.print_result(0, COLOUR_SKIP)
+                        continue
+
                     if t.proc.returncode != 0 and t.attempts < 5:
                         t.print_result(t.attempts+1, 226-6*t.attempts)
                         retried += 1
@@ -174,7 +190,7 @@ class PTest():
                     t.proc.wait()
                     t.print_log()
 
-        print("Passed: %d\nRetried: %d\nFailed: %d\nTotal: %d\nTotal time: %0.2f" % (passed, retried, failed, passed+failed, time.time()-start_time))
+        print("Passed: %d\nRetried: %d\nSkipped: %d\nFailed: %d\nTotal: %d\nTotal time: %0.2f" % (passed, retried, skipped, failed, passed+skipped+failed, time.time()-start_time))
         if failed > 0:
             print("Failing tests:")
             failed_tests.sort()
