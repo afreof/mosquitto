@@ -63,8 +63,11 @@ TEST_OBJS = \
 	ctrl_shell_options_test.o \
 	ctrl_shell_pre_connect_test.o
 
+# The mock tests expect TLS support, as in the CMake build.
+MOCK_TESTS =
 ifeq ($(WITH_GMOCK),yes)
 ifeq ($(WITH_EDITLINE),yes)
+ifeq ($(WITH_TLS),yes)
 LOCAL_CPPFLAGS+=-DWITH_CTRL_SHELL -DWITH_EDITLINE
 MOCK_TESTS = \
 	ctrl_shell_test \
@@ -74,11 +77,8 @@ MOCK_TESTS = \
 	ctrl_shell_help_test \
 	ctrl_shell_options_test \
 	ctrl_shell_pre_connect_test
-else
-MOCK_TESTS =
 endif
-else
-MOCK_TESTS =
+endif
 endif
 
 all : test-compile
@@ -137,8 +137,7 @@ ctrl_shell_pre_connect_test : ctrl_shell_pre_connect_test.o ${LIB_OBJS}
 test-compile : $(MOCK_TESTS)
 
 test-mock : $(MOCK_TESTS)
-ifeq ($(WITH_GMOCK),yes)
-ifeq ($(WITH_EDITLINE),yes)
+ifneq ($(MOCK_TESTS),)
 	./ctrl_shell_broker_test
 	./ctrl_shell_completion_test
 	./ctrl_shell_dynsec_test
@@ -146,7 +145,6 @@ ifeq ($(WITH_EDITLINE),yes)
 	./ctrl_shell_options_test
 	./ctrl_shell_pre_connect_test
 	./ctrl_shell_test
-endif
 endif
 
 test : test-mock
